@@ -17,5 +17,5 @@ https://github.com/seomoz/pyreBloom
 
 
 ##TODO
-1. 为pyreBloom增加scalable bloom filter功能
+1. 为pyreBloom增加[scalable bloom filter](http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf)功能
 2. 手动管理bloom filter dump file，避免bloom filter使用内存一直增加
