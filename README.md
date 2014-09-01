@@ -15,5 +15,6 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
-pyreBloom使用见：
+pyreBloom使用
+===========
 https://github.com/seomoz/pyreBloom
