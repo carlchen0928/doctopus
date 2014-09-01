@@ -14,3 +14,8 @@ python setup.py install
 
 ##pyreBloom使用
 https://github.com/seomoz/pyreBloom
+
+
+##TODO
+1. 为pyreBloom增加scalable bloom filter功能
+2. 手动管理bloom filter dump file，避免bloom filter使用内存一直增加
