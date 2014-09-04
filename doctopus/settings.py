@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from mongoengine import connect
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -36,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.urlcrawler'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,8 +59,11 @@ WSGI_APPLICATION = 'doctopus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'doctopus',
+        'USER': 'xli', 
+        'PASSWORD': '123456', 
+        'HOST': '172.21.1.151',
     }
 }
 
@@ -80,3 +85,33 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+
+#================
+#===== Mongo ====
+#================
+
+MONGO_DB = {
+    'host': '172.21.1.155:27017', 
+    'name': 'doctopus',
+}
+
+MONGO_DB_DEFAULTS = {
+    'name': 'doctopus', 
+    'host': '172.21.1.155:27017', 
+    'alias': 'default', 
+}
+
+MONGO_DB = dict(MONGO_DB_DEFAULTS, **MONGO_DB)
+
+MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
+
+
+REDIS = {
+    'host': '172.21.1.155'
+}
+
+
+
+
