@@ -11,11 +11,12 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-app = Celery('tasks', broker='redis://172.21.1.155')
+app = Celery('tasks', broker='redis://172.21.1.155', 
+						include=['apps.urlcrawler.tasks'])
 logger = get_task_logger(__name__)
 
 @app.task
-def retrieve_page(task_id, url, depth, now_depth, allow_domains=None):
+def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domains=None):
 
 	# Filter the url that has been crawled
 	p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.01, host='172.21.1.155')
@@ -23,8 +24,8 @@ def retrieve_page(task_id, url, depth, now_depth, allow_domains=None):
 		return
 
 	# start crawling...
-	fps = Fetch_and_parse_and_store(task_id, url, depth, now_depth, allow_domains, __name__)
-#	p.extend(url)
+	fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, now_depth, allow_domains, __name__)
+	p.extend(url)
 	
 	if fps.fetch() == True:
 		fps.store()

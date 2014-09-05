@@ -6,23 +6,25 @@ Fetch_and_parse_and_store.py
 used to fetch the page(url) and allow the user to custom header and proxies
 
 '''
-
+import datetime
 import time
 import requests
 import urlparse
 import tasks
 from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
+from apps.urlcrawler.models import DDoc
 
 class Fetch_and_parse_and_store(object):
 	
-	def __init__(self, task_id, url, depth, now_depth, allow_domains, log_name):
+	def __init__(self, task_id, url, from_url, depth, now_depth, allow_domains, log_name):
 		self.task_id = task_id
+		self.url = url
+		self.from_url = from_url
 		self.depth = depth
 		self.now_depth = now_depth
 		self.allow_domains = allow_domains
 
-		self.url = url
 		self.parse_url()
 
 		self.page_source = ''
@@ -49,8 +51,11 @@ class Fetch_and_parse_and_store(object):
 
 	def store(self):
 		#self.page_source, self.url
-		with open('temp.txt', 'a+') as f:
-			f.write(self.page_source)
+		now = datetime.datetime.now() - datetime.timedelta(hours=8)
+		now = now.strftime('%Y-%m-%d %H:%M:%S')
+		doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
+				 page_level=self.now_depth, download_date=now)
+		doc.save() 
 
 	# be supposed to earse the links to photo, css and js.
 	def follow_links(self):
@@ -63,15 +68,15 @@ class Fetch_and_parse_and_store(object):
 			href = link.get('href').encode('utf8')
 			if not href.startswith('http'):
 				href = urlparse.urljoin(self.url, href)
-				tasks.retrieve_page.delay(self.task_id, href, self.depth, self.now_depth + 1, self.allow_domains)
+				tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
 				time.sleep(3)
 			elif href.find(self.netloc) != -1:
-				tasks.retrieve_page.delay(self.task_id, href, self.depth, self.now_depth + 1, self.allow_domains)
+				tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
 				time.sleep(3)
 			else:
 				for domain in allow_domains:
 					if href.find(domain) != -1:
-						tasks.retrieve_page.delay(self.task_id, href, self.depth, self.now_depth + 1, self.allow_domains)
+						tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
 
 
 	def parse_url(self):
@@ -97,7 +102,7 @@ class Fetch_and_parse_and_store(object):
 	def is_response_avaliable(self, response):
 		if response.status_code == requests.codes.ok:
 			try:
-				if 'html' in response.headers.get(r'content-type')
+				if 'html' in response.headers.get(r'content-type'):
 					return True
 			except:
 				pass
