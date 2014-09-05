@@ -37,8 +37,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.urlcrawler'
+    'apps.urlcrawler', 
+	'djcelery'
 )
+import djcelery
+djcelery.setup_loader()
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
