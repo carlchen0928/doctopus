@@ -18,7 +18,7 @@ logger = get_task_logger(__name__)
 @app.task
 def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domains=None):
 
-	# Filter the url that has been crawled
+    # Filter the url that has been crawled
 	p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.01, host='172.21.1.155')
 	if p.contains(url):
 		return
