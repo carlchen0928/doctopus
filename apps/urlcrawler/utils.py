@@ -35,12 +35,14 @@ class Fetch_and_parse_and_store(object):
 	def fetch(self, retry=2, proxies=None):
 		
 		try:
-			response = requests.get(self.url, headers=self.headers, timeout=10, proxies=proxies)
+			response = requests.get(self.url, headers=self.headers,\
+                    timeout=10, proxies=proxies)
 			if self.is_response_avaliable(response):
 				self.page_source = response.text
 				return True
 			else:
-				self.logger.warning('Page not avaliable. Status code: %d URL: %s\n' % (response.status_code, self.url))
+				self.logger.warning('Page not avaliable. Status code: %d URL:%s\n' \
+                        % (response.status_code, self.url))
 				return False
 		except Exception, e:
 			if retry > 0:
@@ -53,7 +55,8 @@ class Fetch_and_parse_and_store(object):
 		#self.page_source, self.url
 		now = datetime.datetime.now() - datetime.timedelta(hours=8)
 		now = now.strftime('%Y-%m-%d %H:%M:%S')
-		doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
+		doc = DDoc(task_id=self.task_id, from_url=self.from_url, \
+                page_url=self.url, page_content=self.page_source,
 				 page_level=self.now_depth, download_date=now)
 		doc.save() 
 
@@ -68,15 +71,21 @@ class Fetch_and_parse_and_store(object):
 			href = link.get('href').encode('utf8')
 			if not href.startswith('http'):
 				href = urlparse.urljoin(self.url, href)
-				tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
+				tasks.retrieve_page.delay(self.task_id, href, self.url, \
+                        self.depth, self.now_depth + 1, \
+                        self.allow_domains)
 				time.sleep(3)
 			elif href.find(self.netloc) != -1:
-				tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
+				tasks.retrieve_page.delay(self.task_id, href, self.url, \
+                        self.depth, self.now_depth + 1, \
+                        self.allow_domains)
 				time.sleep(3)
 			else:
 				for domain in allow_domains:
 					if href.find(domain) != -1:
-						tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
+						tasks.retrieve_page.delay(self.task_id, href, self.url,\
+                                self.depth, self.now_depth + 1, \
+                                self.allow_domains)
 
 
 	def parse_url(self):
@@ -94,7 +103,8 @@ class Fetch_and_parse_and_store(object):
             'Connection': 'keep-alive',
             #设置Host会导致TooManyRedirects, 因为hostname不会随着原url跳转而更改,可不设置
             #'Host':urlparse(self.url).hostname
-            'User-Agent' : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.4 (KHTML, like Gecko) Chrome/22.0.1229.79 Safari/537.4',
+            'User-Agent' : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.4 \
+            (KHTML, like Gecko) Chrome/22.0.1229.79 Safari/537.4',
             'Referer' : self.url,
         }
 		self.headers.update(kargs)
