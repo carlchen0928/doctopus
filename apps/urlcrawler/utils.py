@@ -15,6 +15,46 @@ from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
 from apps.urlcrawler.models import DDoc
 
+
+def dispatch_task(task, log_name):
+    logger = get_task_logger(log_name)
+    task_id = task[0]
+    url_path = task[1]
+    max_depth = task[2]
+    allow_domains = task[3]
+    urls = []
+    
+    #check the argument
+    if task_id == None:
+        logger.error('task_id is None.')
+        return
+    if url_path == None:
+        logger.error('url_path is None.')
+        return
+    if max_depth == None:
+        logger.error('max_depth is None.')
+        return
+    elif max_depth <= 0:
+        logger.debug('max depth less than ONE, set it to ONE.')
+        max_depth = 1
+
+    try:
+        with open(url_path, 'r') as f:
+            urls = f.readlines()
+    except Exception, e:
+        logger.debug(e)
+    if urls == []:
+        logger.error('url list is empty, can not continue')
+        return
+
+    for url in urls:
+        tasks.retrieve_page.apply_async((task_id, url, \
+                    None, max_depth, 0,\
+                    allow_domains), \
+                    link=tasks.task_complete.s(task_id, url))
+        logger.info('task %s\'s url: %s has been sent.' %task_id, %url)
+    
+
 class Fetch_and_parse_and_store(object):
 	
 	def __init__(self, task_id, url, from_url, depth, now_depth, allow_domains, log_name):

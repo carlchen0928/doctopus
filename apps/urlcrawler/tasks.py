@@ -4,6 +4,8 @@ from celery.utils.log import get_task_logger
 import pyreBloom
 import tldextract
 import time
+import redis
+from django.conf import settings
 
 from utils import Fetch_and_parse_and_store
 
@@ -24,11 +26,48 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
 		return
 
 	# start crawling...
-	fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, now_depth, allow_domains, __name__)
+	fps = Fetch_and_parse_and_store(task_id, url, from_url, \
+            depth, now_depth, allow_domains, __name__)
 	p.extend(url)
 	
 	if fps.fetch() == True:
 		fps.store()
 		fps.follow_links()
 
-	
+
+
+@app.task
+def task_running():
+    try:
+        r = redis.Redis(connection_pool=settings.REDIS_POOL)
+        running = r.hlen(REDIS_RUNNING)
+
+        #if running task is very little, get some from queueing
+        if running < REDIS_RUNNING_MAX:
+            for i in range(1, REDIS_RUNNING_MAX - running):
+                task = r.rpop(REDIS_QUEUEING)
+                r.hset(REDIS_RUNNING, hash(task[0]), task)
+                #split task into many urls and do work
+                dispatch_task(task)
+
+    except Exception, e:
+        logger.debug(e)
+        logger.debug('can not push task from queueing to running')
+
+@app.task
+def task_complete(status, task_id, url):
+    print 'call task complete'
+
+
+@app.task
+def task_error(uuid, task_id, url):
+    print 'call task error'
+
+
+@app.task
+def allTask_complete(task_id):
+    #remove bloom filter
+    #remove task from redis running
+    #change mysql status
+    #remove redis task-url dict
+    print 'call allTask complete'

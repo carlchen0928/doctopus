@@ -116,5 +116,17 @@ REDIS = {
 }
 
 
+#===============
+#===  REDIS ====
+#===============
+REDIS = {
+    'host': '172.21.1.155',
+}
 
+REDIS_POOL = redis.ConnectionPool(host=REDIS['host'], port=6379, db=9)
+
+REDIS_QUEUEING_MAX = 1500
+REDIS_RUNNING_MAX = 10
+REDIS_QUEUEING = 'task_queueing'
+REDIS_RUNNING = 'task_running'
 
