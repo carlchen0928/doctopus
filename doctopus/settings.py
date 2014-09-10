@@ -111,10 +111,14 @@ MONGO_DB = dict(MONGO_DB_DEFAULTS, **MONGO_DB)
 MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 
 
-REDIS = {
-    'host': '172.21.1.155'
+#===============================
+#=====Celery Worker Result======
+#===============================
+CELERY_WORKER_RESULT = {
+    'successful': 0,
+    'fetch_error': 1,
+    'store_error': 2,
 }
-
 
 #===============
 #===  REDIS ====
