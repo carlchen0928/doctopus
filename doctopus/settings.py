@@ -114,11 +114,9 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 #===============================
 #=====Celery Worker Result======
 #===============================
-CELERY_WORKER_RESULT = {
-    'successful': 0,
-    'fetch_error': 1,
-    'store_error': 2,
-}
+(CELERY_WORKER_OK, \
+ CELERY_WORKER_FETCHE, \
+ CELERY_WORKER_STOREE) = range(1, 4)
 
 #===============
 #===  REDIS ====
