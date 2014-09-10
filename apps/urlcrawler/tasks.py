@@ -51,11 +51,16 @@ def task_running():
 
         #if running task is very little, get some from queueing
         if running < REDIS_RUNNING_MAX:
+            if r.llen(REDIS_QUEUEING) == 0:
+                logger.debug('there is no queueing task!')
+                return
             for i in range(1, REDIS_RUNNING_MAX - running):
                 task = r.rpop(REDIS_QUEUEING)
                 r.hset(REDIS_RUNNING, hash(task[0]), task)
                 #split task into many urls and do work
                 dispatch_task(task)
+                logger.debug('task %s have been sent to running queue.' %
+                        (task[0]))
 
     except Exception, e:
         logger.debug(e)
@@ -63,6 +68,7 @@ def task_running():
 
 @app.task
 def task_complete(status, task_id, url):
+    if status 
     print 'call task complete'
 
 
