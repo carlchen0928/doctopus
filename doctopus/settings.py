@@ -115,6 +115,13 @@ REDIS = {
     'host': '172.21.1.155'
 }
 
-
+#===============================
+#=====Celery Worker Result======
+#===============================
+CELERY_WORKER_RESULT = {
+    'successful': 0,
+    'fetch_error': 1,
+    'store_error': 2,
+}
 
 
