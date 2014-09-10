@@ -8,7 +8,6 @@ import redis
 from django.conf import settings
 
 from utils import Fetch_and_parse_and_store
-from django.conf import settings
 
 import sys
 reload(sys)
@@ -44,11 +43,11 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     if fps.fetch() == True:
         fps.follow_links()
         if fps.store() == True:
-            return settings.CELERY_WORKER_RESULT['successful']
+            return settings.CELERY_WORKER_OK
         else:
-            return settings.CELERY_WORKER_RESULT['store_error']
+            return settings.CELERY_WORKER_STOREE
     else:
-        return settings.CELERY_WORKER_RESULT['fetch_error']
+        return settings.CELERY_WORKER_FETCHE
         
 
             
