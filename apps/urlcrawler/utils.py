@@ -148,22 +148,28 @@ class Fetch_and_parse_and_store(object):
                 self.page_source = response.text
                 return True
             else:
-                self.logger.warning('Page not avaliable. Status code: %d URL: %s\n' % (response.status_code, self.url))
+                self.logger.warning('FETCH WARNING\n' + 'Page not avaliable. Status code: %d URL: %s\n' % (response.status_code, self.url))
                 return False
         except Exception, e:
             if retry > 0:
                 return self.fetch(retry - 1)
             else:
-                self.logger.debug(str(e) + ' URL: %s \n' % self.url)
+                self.logger.error('FETCH ERROR\n' + str(e) + ' URL: %s \n' % self.url)
                 return False
 
     def store(self):
         #self.page_source, self.url
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
         now = now.strftime('%Y-%m-%d %H:%M:%S')
-        doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
-                page_level=self.now_depth, download_date=now)
-        doc.save() 
+        try:
+            doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
+                    page_level=self.now_depth, download_date=now)
+            doc.save()
+        except Exception, e:
+            self.logger.error('STORE ERROR\n' + str(e) + ' URL: %s \n' % self.url)
+            return False
+        return True
+            
 
     # be supposed to earse the links to photo, css and js.
     def follow_links(self):
