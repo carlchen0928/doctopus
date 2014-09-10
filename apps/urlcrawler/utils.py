@@ -15,6 +15,46 @@ from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
 from apps.urlcrawler.models import DDoc
 
+
+def dispatch_task(task, log_name):
+    logger = get_task_logger(log_name)
+    task_id = task[0]
+    url_path = task[1]
+    max_depth = task[2]
+    allow_domains = task[3]
+    urls = []
+    
+    #check the argument
+    if task_id == None:
+        logger.error('task_id is None.')
+        return
+    if url_path == None:
+        logger.error('url_path is None.')
+        return
+    if max_depth == None:
+        logger.error('max_depth is None.')
+        return
+    elif max_depth <= 0:
+        logger.debug('max depth less than ONE, set it to ONE.')
+        max_depth = 1
+
+    try:
+        with open(url_path, 'r') as f:
+            urls = f.readlines()
+    except Exception, e:
+        logger.debug(e)
+    if urls == []:
+        logger.error('url list is empty, can not continue')
+        return
+
+    for url in urls:
+        tasks.retrieve_page.apply_async((task_id, url, \
+                    None, max_depth, 0,\
+                    allow_domains), \
+                    link=tasks.task_complete.s(task_id, url))
+        logger.info('task %s\'s url: %s has been sent.' %task_id, %url)
+    
+
 class Fetch_and_parse_and_store(object):
 	
     def __init__(self, task_id, url, from_url, depth, now_depth, allow_domains, log_name):
@@ -34,6 +74,63 @@ class Fetch_and_parse_and_store(object):
 
     def fetch(self, retry=2, proxies=None):
 		
+		try:
+			response = requests.get(self.url, headers=self.headers,\
+                    timeout=10, proxies=proxies)
+			if self.is_response_avaliable(response):
+				self.page_source = response.text
+				return True
+			else:
+				self.logger.warning('Page not avaliable. Status code: %d URL:%s\n' \
+                        % (response.status_code, self.url))
+				return False
+		except Exception, e:
+			if retry > 0:
+				return self.fetch(retry - 1)
+			else:
+				self.logger.debug(str(e) + ' URL: %s \n' % self.url)
+				return False
+
+	def store(self):
+		#self.page_source, self.url
+		now = datetime.datetime.now() - datetime.timedelta(hours=8)
+		now = now.strftime('%Y-%m-%d %H:%M:%S')
+		doc = DDoc(task_id=self.task_id, from_url=self.from_url, \
+                page_url=self.url, page_content=self.page_source,
+				 page_level=self.now_depth, download_date=now)
+		doc.save() 
+
+	# be supposed to earse the links to photo, css and js.
+	def follow_links(self):
+
+		if self.now_depth >= self.depth:
+			return
+
+		soup = BeautifulSoup(self.page_source)
+		for link in soup.find_all('a', href=True):
+			href = link.get('href').encode('utf8')
+			if not href.startswith('http'):
+				href = urlparse.urljoin(self.url, href)
+				tasks.retrieve_page.delay(self.task_id, href, self.url, \
+                        self.depth, self.now_depth + 1, \
+                        self.allow_domains)
+				time.sleep(3)
+			elif href.find(self.netloc) != -1:
+				tasks.retrieve_page.delay(self.task_id, href, self.url, \
+                        self.depth, self.now_depth + 1, \
+                        self.allow_domains)
+				time.sleep(3)
+			else:
+				for domain in allow_domains:
+					if href.find(domain) != -1:
+						tasks.retrieve_page.delay(self.task_id, href, self.url,\
+                                self.depth, self.now_depth + 1, \
+                                self.allow_domains)
+
+
+	def parse_url(self):
+		res = urlparse.urlparse(self.url)
+		self.netloc = res[1]
         try:
             response = requests.get(self.url, headers=self.headers, timeout=10, proxies=proxies)
             if self.is_response_avaliable(response):
@@ -100,7 +197,8 @@ class Fetch_and_parse_and_store(object):
             'Connection': 'keep-alive',
             #设置Host会导致TooManyRedirects, 因为hostname不会随着原url跳转而更改,可不设置
             #'Host':urlparse(self.url).hostname
-            'User-Agent' : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.4 (KHTML, like Gecko) Chrome/22.0.1229.79 Safari/537.4',
+            'User-Agent' : 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.4 \
+            (KHTML, like Gecko) Chrome/22.0.1229.79 Safari/537.4',
             'Referer' : self.url,
         }
         self.headers.update(kargs)
