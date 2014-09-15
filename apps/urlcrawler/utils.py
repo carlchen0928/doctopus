@@ -49,8 +49,12 @@ def dispatch_task(task, log_name):
     if urls == []:
         logger.error('url list is empty, can not continue')
         return
+        
+    #make a dict in redis, to track this task's status, use xor value.
+    r.hset('task_xor', task_id, 0)
 
     for url in urls:
+        #start celery task
         tasks.retrieve_page.apply_async((task_id, url, \
                     None, max_depth, 0,\
                     allow_domains), \
@@ -58,13 +62,6 @@ def dispatch_task(task, log_name):
         logger.info('task %s\'s url: %s has been sent.' % (task_id, url))
 
 
-def check_done(task_id):
-    r = redis.Redis(connection_pool=settings.REDIS_POOL)
-    if not r.exists('mp_' + task_id):
-        logger.error('task %s map not exist in redis!' % task_id)
-        return 
-
-    
 
 class Fetch_and_parse_and_store(object):
 	
