@@ -11,6 +11,7 @@ import acker
 import tasks
 from django.conf import settings
 from apps.urlcrawler.models import runningTask
+from apps.urlcrawler.models import urlTask 
 
 from utils import Fetch_and_parse_and_store
 
@@ -60,16 +61,16 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
 def task_running():
     try:
         r = redis.Redis(connection_pool=settings.REDIS_POOL)
-        running = r.hlen(REDIS_RUNNING)
+        running = r.hlen(settings.REDIS_RUNNING)
 
         #if running task is very little, get some from queueing
-        if running < REDIS_RUNNING_MAX:
-            if r.llen(REDIS_QUEUEING) == 0:
+        if running < settings.REDIS_RUNNING_MAX:
+            if r.llen(settings.REDIS_QUEUEING) == 0:
                 logger.debug('there is no queueing task!')
                 return
-            for i in range(1, REDIS_RUNNING_MAX - running):
-                task = r.rpop(REDIS_QUEUEING)
-                r.hset(REDIS_RUNNING, hash(task[0]), task)
+            for i in range(1, settings.REDIS_RUNNING_MAX - running):
+                task = r.rpop(settings.REDIS_QUEUEING)
+                r.hset(settings.REDIS_RUNNING, hash(task[0]), task)
 
                 #split task into many urls and do work
                 dispatch_task(task)
@@ -136,6 +137,11 @@ def task_complete(task_id, url):
 
 @app.task
 def allTask_complete(task_id):
+    p = pyreBloom.pyreBloom('task%s' % (task_id), 100000, 0.01, host='172.21.1.155')
+    p.delete()
+    r = redis.Redis(connection_pool=settings.REDIS_POOL)
+    r.hdel(settings.REDIS_RUNNING, hash(task_id))
+    urlTask.objects.filter(task_id=task_id).update(status='Completed')
     #remove bloom filter
     #remove task from redis running
     #change mysql status
