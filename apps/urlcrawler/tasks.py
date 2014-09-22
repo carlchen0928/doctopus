@@ -32,20 +32,11 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     #if p.contains(url):
     #    return
 
-	# start crawling...
-	fps = Fetch_and_parse_and_store(task_id, url, from_url, \
-            depth, now_depth, allow_domains, __name__)
-	p.extend(url)
-	
-	if fps.fetch() == True:
-		fps.store()
-		fps.follow_links()
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 
             now_depth, allow_domains, __name__)
     p.extend(url)
 
-    
     if fps.fetch() == True:
         fps.follow_links()
         if fps.store() == True:

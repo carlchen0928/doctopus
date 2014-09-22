@@ -99,14 +99,16 @@ class Fetch_and_parse_and_store(object):
 				self.logger.debug(str(e) + ' URL: %s \n' % self.url)
 				return False
 
-	def store(self):
-		#self.page_source, self.url
-		now = datetime.datetime.now() - datetime.timedelta(hours=8)
-		now = now.strftime('%Y-%m-%d %H:%M:%S')
-		doc = DDoc(task_id=self.task_id, from_url=self.from_url, \
-                page_url=self.url, page_content=self.page_source,
-				 page_level=self.now_depth, download_date=now)
-		doc.save() 
+    def follow_links_delay(self, href, sleep_or_not):
+        result = tasks.new_task.delay(self.task_id, href)
+        result.get()
+
+		tasks.retrieve_page.delay(self.task_id, href, self.url, \
+            self.depth, self.now_depth + 1, self.allow_domains)
+
+        if sleep_or_not == 1:
+    		time.sleep(3)
+
 
 	# be supposed to earse the links to photo, css and js.
 	def follow_links(self):
@@ -119,43 +121,19 @@ class Fetch_and_parse_and_store(object):
 			href = link.get('href').encode('utf8')
 			if not href.startswith('http'):
 				href = urlparse.urljoin(self.url, href)
-				tasks.retrieve_page.delay(self.task_id, href, self.url, \
-                        self.depth, self.now_depth + 1, \
-                        self.allow_domains)
-				time.sleep(3)
+                self.follow_links_delay(href, 1)
 			elif href.find(self.netloc) != -1:
-				tasks.retrieve_page.delay(self.task_id, href, self.url, \
-                        self.depth, self.now_depth + 1, \
-                        self.allow_domains)
-				time.sleep(3)
+                self.follow_links_delay(href, 1)
 			else:
 				for domain in allow_domains:
 					if href.find(domain) != -1:
-						tasks.retrieve_page.delay(self.task_id, href, self.url,\
-                                self.depth, self.now_depth + 1, \
-                                self.allow_domains)
-
-
-	def parse_url(self):
-		res = urlparse.urlparse(self.url)
-		self.netloc = res[1]
-        try:
-            response = requests.get(self.url, headers=self.headers, timeout=10, proxies=proxies)
-            if self.is_response_avaliable(response):
-                self.page_source = response.text
-                return True
-            else:
-                self.logger.warning('FETCH WARNING\n' + 'Page not avaliable. Status code: %d URL: %s\n' % (response.status_code, self.url))
-                return False
-        except Exception, e:
-            if retry > 0:
-                return self.fetch(retry - 1)
-            else:
-                self.logger.error('FETCH ERROR\n' + str(e) + ' URL: %s \n' % self.url)
-                return False
+                        self.follow_links_delay(href, 0)
+                        break
 
     def store(self):
         #self.page_source, self.url
+        task_complete.delay(self.task_id, self.url)
+
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
         now = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
@@ -166,28 +144,6 @@ class Fetch_and_parse_and_store(object):
             self.logger.error('STORE ERROR\n' + str(e) + ' URL: %s \n' % self.url)
             return False
         return True
-            
-
-    # be supposed to earse the links to photo, css and js.
-    def follow_links(self):
-
-        if self.now_depth >= self.depth:
-            return
-
-        soup = BeautifulSoup(self.page_source)
-        for link in soup.find_all('a', href=True):
-            href = link.get('href').encode('utf8')
-            if not href.startswith('http'):
-                href = urlparse.urljoin(self.url, href)
-                tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
-                time.sleep(3)
-            elif href.find(self.netloc) != -1:
-                tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
-                time.sleep(3)
-            else:
-                for domain in allow_domains:
-                    if href.find(domain) != -1:
-                        tasks.retrieve_page.delay(self.task_id, href, self.url, self.depth, self.now_depth + 1, self.allow_domains)
 
 
     def parse_url(self):
