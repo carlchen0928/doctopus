@@ -55,6 +55,7 @@ def dispatch_task(task, log_name):
 
     for url in urls:
         #start celery task
+        #ack task
         tasks.retrieve_page.apply_async((task_id, url, \
                     None, max_depth, 0,\
                     allow_domains), \

@@ -99,6 +99,8 @@ def task_error(uuid, task_id, url):
 
 @app.task
 def new_task(task_id, url):
+    #write task_id, url to mysql
+    #xor with url
     taskr = runningTask(task_id=task_id, page_url=url)
     taskr.save()
     try:
@@ -106,11 +108,12 @@ def new_task(task_id, url):
     except Exception, e:
         logger.error(e)
         logger.error('encode error with task %s url %s' % (task_id, url))
-    #write task_id, url to mysql
-    #xor with url
 
 @app.task
 def task_complete(task_id, url):
+    #xor this url
+    #check xor value zero
+    #if done, call allTask_complete
     try:
         acker.setValue(task_id, url)
     except Exception, e:
@@ -131,9 +134,6 @@ def task_complete(task_id, url):
         result = allTask_complete.delay(task_id)        
         result.get():
         logger.info('task %s have done!' % (task_id))
-    #xor this url
-    #check xor value zero
-    #if done, call allTask_complete
 
 @app.task
 def allTask_complete(task_id):
