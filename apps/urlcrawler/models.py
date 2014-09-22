@@ -27,4 +27,10 @@ class DDoc(mongo.Document):
         'collection': 'doctopus', 
         'ordering': ['-download_date']
     }
+
+class runningTask(models.Model):
+    task_id = models.IntegerField()
+    page_url = models.CharField(max_length=700, db_index=True)
+    class Meta:
+        db_table = 'taskrun'
 # Create your models here.

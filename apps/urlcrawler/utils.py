@@ -11,9 +11,11 @@ import time
 import requests
 import urlparse
 import tasks
+import redis
 from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
 from apps.urlcrawler.models import DDoc
+from django.conf import settings
 
 
 def dispatch_task(task, log_name):
@@ -34,26 +36,32 @@ def dispatch_task(task, log_name):
     if max_depth == None:
         logger.error('max_depth is None.')
         return
-    elif max_depth <= 0:
-        logger.debug('max depth less than ONE, set it to ONE.')
-        max_depth = 1
+    elif max_depth < 0:
+        logger.debug('max depth less than ZERO, set it to ZERO.')
+        max_depth = 0
 
     try:
         with open(url_path, 'r') as f:
             urls = f.readlines()
     except Exception, e:
         logger.debug(e)
+        return
     if urls == []:
         logger.error('url list is empty, can not continue')
         return
+        
+    #make a dict in redis, to track this task's status, use xor value.
+    r.hset('task_xor', task_id, 0)
 
     for url in urls:
+        #start celery task
         tasks.retrieve_page.apply_async((task_id, url, \
                     None, max_depth, 0,\
                     allow_domains), \
                     link=tasks.task_complete.s(task_id, url))
-        logger.info('task %s\'s url: %s has been sent.' %task_id, %url)
-    
+        logger.info('task %s\'s url: %s has been sent.' % (task_id, url))
+
+
 
 class Fetch_and_parse_and_store(object):
 	

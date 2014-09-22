@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import redis
 from mongoengine import connect
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -114,11 +115,18 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 #===============================
 #=====Celery Worker Result======
 #===============================
-CELERY_WORKER_RESULT = {
-    'successful': 0,
-    'fetch_error': 1,
-    'store_error': 2,
-}
+(CELERY_WORKER_OK, \
+ CELERY_WORKER_FETCHE, \
+ CELERY_WORKER_STOREE, \
+ CELERY_WORKER_RUNNING) = range(1, 5)
+
+
+
+#====================
+#=== Task Result  ===
+#====================
+(TASK_FINISH, \
+ TASK_FINISH_WITH_ERROR) = range(1, 3)
 
 #===============
 #===  REDIS ====
