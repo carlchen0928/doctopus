@@ -30,6 +30,8 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+import djcelery
+djcelery.setup_loader()
 
 INSTALLED_APPS = (
     'django.contrib.admin',
@@ -41,8 +43,6 @@ INSTALLED_APPS = (
     'apps.urlcrawler', 
 	'djcelery'
 )
-import djcelery
-djcelery.setup_loader()
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -113,13 +113,15 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 
 
 #===============================
-#=====Celery Worker Result======
+#======== Celery ===============
 #===============================
 (CELERY_WORKER_OK, \
  CELERY_WORKER_FETCHE, \
  CELERY_WORKER_STOREE, \
  CELERY_WORKER_RUNNING) = range(1, 5)
 
+BROKER_URL = 'redis://172.21.1.155/9'
+CELERY_RESULT_BACKEND = 'redis://172.21.1.155/10'
 
 
 #====================
@@ -139,6 +141,48 @@ REDIS_POOL = redis.ConnectionPool(host=REDIS['host'], port=6379, db=9)
 
 REDIS_QUEUEING_MAX = 1500
 REDIS_RUNNING_MAX = 10
-REDIS_QUEUEING = 'task_queueing'
-REDIS_RUNNING = 'task_running'
+REDIS_QUEUEING = 'UserTask_Queueing'
+REDIS_RUNNING = 'UserTask_Running'
 
+
+#===================================
+#========== Celery Beat ============
+#===================================
+from datetime import timedelta
+CELERY_IMPORTS = ("apps.urlcrawler.tasks",)
+CELERY_INCLUDE = ("apps.urlcrawler.tasks",)
+
+CELERYBEAT_SCHEDULE = {
+    "check_running_queue": {
+        "task": "apps.urlcrawler.tasks.task_running",
+        "schedule": timedelta(minutes=2),
+    },
+}
+#=====================================
+#=========== Routing task ============
+#=====================================
+CELERY_ROUTES = {
+    'apps.urlcrawler.tasks.task_running': {
+        'queue': 'task_running',
+    },
+    'apps.urlcrawler.tasks.new_task': {
+        'queue': 'task_running',
+    },
+    'apps.urlcrawler.tasks.task_complete': {
+        'queue': 'task_running',
+    },
+    'apps.urlcrawler.tasks.allTask_complete': {
+        'queue': 'task_running',
+    },
+    'apps.urlcrawler.tasks.retrieve_page': {
+        'queue': 'url_crawler',
+    },
+}
+
+#CELERY_QUEUES = {
+#    'task_running': {
+#        'exchange': 'task_running',
+#        'exchange_type': 'direct',
+#        'binding_key': 'task_running',
+#    },
+#}
