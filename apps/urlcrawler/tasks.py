@@ -4,24 +4,31 @@ from celery.utils.log import get_task_logger
 import pyreBloom
 import tldextract
 import time
+import os
 import redis
 import base64
 import binascii
 import acker
 import tasks
+import pickle
 from django.conf import settings
+from datetime import timedelta
 from apps.urlcrawler.models import runningTask
 from apps.urlcrawler.models import urlTask 
 
-from utils import Fetch_and_parse_and_store
+from utils import Fetch_and_parse_and_store, dispatch_task
 
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-app = Celery('tasks', broker='redis://172.21.1.155',
-        backend='redis://172.21.1.155', 
-		include=['apps.urlcrawler.tasks'],)
+#=================Celery App===============================
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+app = Celery('tasks')
+app.config_from_object('django.conf:settings')#Important
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+#===========================================================
+
 logger = get_task_logger(__name__)
 
 @app.task
@@ -29,8 +36,8 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
 
     # Filter the url that has been crawled
     p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.01, host='172.21.1.155')
-    #if p.contains(url):
-    #    return
+    if p.contains(url):
+        return
 
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 
@@ -47,7 +54,8 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
         return settings.CELERY_WORKER_FETCHE
 
 
-
+# This task run in the server
+# handling the task in Redis Queue--->run
 @app.task
 def task_running():
     try:
@@ -56,15 +64,19 @@ def task_running():
 
         #if running task is very little, get some from queueing
         if running < settings.REDIS_RUNNING_MAX:
-            if r.llen(settings.REDIS_QUEUEING) == 0:
+            length = r.llen(settings.REDIS_QUEUEING)
+            if length == 0:
                 logger.debug('there is no queueing task!')
                 return
-            for i in range(1, settings.REDIS_RUNNING_MAX - running):
+            smaller = min(length, settings.REDIS_RUNNING_MAX - running) 
+            for i in range(smaller):
                 task = r.rpop(settings.REDIS_QUEUEING)
+                task = pickle.loads(task)
+
                 r.hset(settings.REDIS_RUNNING, hash(task[0]), task)
 
                 #split task into many urls and do work
-                dispatch_task(task)
+                dispatch_task(task, __name__, r)
                 logger.debug('task %s have been sent to running queue.' %
                         (task[0]))
 
@@ -88,8 +100,12 @@ def task_error(uuid, task_id, url):
     print 'call task error'
     pass
 
+# This task run in server
+# handling the url follewed the seed url
 @app.task
 def new_task(task_id, url):
+    #write task_id, url to mysql
+    #xor with url
     taskr = runningTask(task_id=task_id, page_url=url)
     taskr.save()
     try:
@@ -97,11 +113,15 @@ def new_task(task_id, url):
     except Exception, e:
         logger.error(e)
         logger.error('encode error with task %s url %s' % (task_id, url))
-    #write task_id, url to mysql
-    #xor with url
 
+
+# This task run in server
+# handling the url completed
 @app.task
 def task_complete(task_id, url):
+    #xor this url
+    #check xor value zero
+    #if done, call allTask_complete
     try:
         acker.setValue(task_id, url)
     except Exception, e:
@@ -120,22 +140,21 @@ def task_complete(task_id, url):
 
     if xorValue == 0:
         result = allTask_complete.delay(task_id)        
-        result.get():
+        result.get()
         logger.info('task %s have done!' % (task_id))
-    #xor this url
-    #check xor value zero
-    #if done, call allTask_complete
 
+
+# This task run in server
 @app.task
 def allTask_complete(task_id):
+    #remove bloom filter
+    #remove task from redis running
+    #change mysql status
+    #remove redis task-url dict
     p = pyreBloom.pyreBloom('task%s' % (task_id), 100000, 0.01, host='172.21.1.155')
     p.delete()
     r = redis.Redis(connection_pool=settings.REDIS_POOL)
     r.hdel(settings.REDIS_RUNNING, hash(task_id))
     urlTask.objects.filter(task_id=task_id).update(status='Completed')
-    #remove bloom filter
-    #remove task from redis running
-    #change mysql status
-    #remove redis task-url dict
     print 'call allTask complete'
     pass
