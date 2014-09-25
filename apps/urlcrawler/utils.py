@@ -55,6 +55,7 @@ def dispatch_task(task, log_name, r):
     for url in urls:
         logger.info(url)
         #start celery task
+        #ack task
         url = url.strip()
         acker.setValue(task_id, url)
         tasks.retrieve_page.apply_async((task_id, url, \

@@ -118,7 +118,7 @@ def new_task(task_id, url):
 # This task run in server
 # handling the url completed
 @app.task
-def task_complete(task_id, url):
+def task_complete(ret_val, task_id, url):
     #xor this url
     #check xor value zero
     #if done, call allTask_complete
@@ -128,7 +128,8 @@ def task_complete(task_id, url):
         logger.error(e)
         logger.error('encode error with task %s url %s' % (task_id, url))
         return
-    runningTask.objects.filter(task_id=task_id, page_url=url).delete()
+    if ret_val == settings.CELERY_WORKER_OK:
+        runningTask.objects.filter(task_id=task_id, page_url=url).delete()
 
     xorValue = 1
     try:
@@ -153,8 +154,7 @@ def allTask_complete(task_id):
     #remove redis task-url dict
     p = pyreBloom.pyreBloom('task%s' % (task_id), 100000, 0.01, host='172.21.1.155')
     p.delete()
-    r = redis.Redis(connection_pool=settings.REDIS_POOL)
-    r.hdel(settings.REDIS_RUNNING, hash(task_id))
+    #r = redis.Redis(connection_pool=settings.REDIS_POOL)
+    #r.hdel(settings.REDIS_RUNNING, hash(task_id))
     urlTask.objects.filter(task_id=task_id).update(status='Completed')
     print 'call allTask complete'
-    pass
