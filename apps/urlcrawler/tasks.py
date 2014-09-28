@@ -36,8 +36,8 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
 
     # Filter the url that has been crawled
     p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.01, host='172.21.1.155')
-    if p.contains(url):
-        return
+#if p.contains(url):
+#       return
 
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 

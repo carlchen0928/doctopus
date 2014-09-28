@@ -155,7 +155,7 @@ CELERY_INCLUDE = ("apps.urlcrawler.tasks",)
 CELERYBEAT_SCHEDULE = {
     "check_running_queue": {
         "task": "apps.urlcrawler.tasks.task_running",
-        "schedule": timedelta(minutes=2),
+        "schedule": timedelta(seconds=10),
     },
 }
 #=====================================

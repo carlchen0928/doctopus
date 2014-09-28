@@ -107,19 +107,19 @@ class Fetch_and_parse_and_store(object):
         result.get()
 
         tasks.retrieve_page.delay(self.task_id, href, self.url, \
-            self.depth, self.now_depth + 1, self.allow_domains)
+            self.depth, self.now_depth + 1, self.allow_domains, \
+            link=tasks.task_complete.s(task_id, url))
 
         if sleep_or_not == 1:
     		time.sleep(3)
 
 
 	# be supposed to earse the links to photo, css and js.
-	def follow_links(self):
+    def follow_links(self):
+        if self.now_depth >= self.depth:
+            return
 
-		if self.now_depth >= self.depth:
-			return
-
-		soup = BeautifulSoup(self.page_source)
+        soup = BeautifulSoup(self.page_source)
         for link in soup.find_all('a', href=True):
             href = link.get('href').encode('utf8')
             if not href.startswith('http'):
@@ -135,7 +135,7 @@ class Fetch_and_parse_and_store(object):
 
     def store(self):
         #self.page_source, self.url
-        task_complete.delay(self.task_id, self.url)
+        #task_complete.delay(settings.CELERY_WORKER_OK, self.task_id, self.url)
 
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
         now = now.strftime('%Y-%m-%d %H:%M:%S')
