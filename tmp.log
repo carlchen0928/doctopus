@@ -694,3 +694,9 @@ HTTPConnectionPool(host='pat.zju.edu.cn', port=80): Max retries exceeded with ur
 [2014-09-09 20:35:25,557: DEBUG/MainProcess] | Consumer: Shutdown Events...
 [2014-09-09 20:35:25,558: DEBUG/MainProcess] | Consumer: Shutdown Connection...
 [2014-09-09 20:35:25,559: DEBUG/MainProcess] removing tasks from inqueue until task handler finished
+[2014-09-28 02:04:42,737: DEBUG/MainProcess] Setting default socket timeout to 30
+[2014-09-28 02:04:42,740: INFO/MainProcess] beat: Starting...
+[2014-09-28 02:04:43,236: DEBUG/MainProcess] Current schedule:
+<Entry: check_running_queue apps.urlcrawler.tasks.task_running() <freq: 2.00 minutes>
+[2014-09-28 02:04:43,236: DEBUG/MainProcess] beat: Ticking with max interval->5.00 minutes
+[2014-09-28 02:04:43,240: DEBUG/MainProcess] beat: Waking up in 2.00 minutes.
