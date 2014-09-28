@@ -103,15 +103,14 @@ class Fetch_and_parse_and_store(object):
 				return False
 
     def follow_links_delay(self, href, sleep_or_not):
-        result = tasks.new_task.delay(self.task_id, href)
-        result.get()
+        tasks.new_task.delay(self.task_id, href).get()
 
-        tasks.retrieve_page.delay(self.task_id, href, self.url, \
-            self.depth, self.now_depth + 1, self.allow_domains, \
-            link=tasks.task_complete.s(task_id, url))
+        tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
+            self.depth, self.now_depth + 1, self.allow_domains), \
+            link=tasks.task_complete.s(self.task_id, self.url))
 
         if sleep_or_not == 1:
-    		time.sleep(3)
+    		time.sleep(settings.DOWNLOAD_DELAY / 60)
 
 
 	# be supposed to earse the links to photo, css and js.
@@ -128,7 +127,7 @@ class Fetch_and_parse_and_store(object):
             elif href.find(self.netloc) != -1:
                 self.follow_links_delay(href, 1)
             else:
-                for domain in allow_domains:
+                for domain in self.allow_domains:
                     if href.find(domain) != -1:
                         self.follow_links_delay(href, 0)
                         break

@@ -11,6 +11,7 @@ import binascii
 import acker
 import tasks
 import pickle
+import traceback
 from django.conf import settings
 from datetime import timedelta
 from apps.urlcrawler.models import runningTask
@@ -81,6 +82,7 @@ def task_running():
                         (task[0]))
 
     except Exception, e:
+        traceback.print_exc()
         logger.debug(e)
         logger.debug('can not push task from queueing to running')
 
