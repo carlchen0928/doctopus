@@ -123,6 +123,8 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 BROKER_URL = 'redis://172.21.1.155/9'
 CELERY_RESULT_BACKEND = 'redis://172.21.1.155/10'
 
+DOWNLOAD_DELAY = 10
+
 
 #====================
 #=== Task Result  ===

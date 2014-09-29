@@ -11,6 +11,7 @@ import binascii
 import acker
 import tasks
 import pickle
+import traceback
 from django.conf import settings
 from datetime import timedelta
 from apps.urlcrawler.models import runningTask
@@ -81,8 +82,8 @@ def task_running():
                         (task[0]))
 
     except Exception, e:
-        logger.debug(e)
-        logger.debug('can not push task from queueing to running')
+        traceback.print_exc()
+        logger.error('can not push task from queueing to running')
 
 '''
 @app.task
@@ -111,6 +112,7 @@ def new_task(task_id, url):
     try:
         acker.setValue(task_id, url)
     except Exception, e:
+        traceback.print_exc()
         logger.error(e)
         logger.error('encode error with task %s url %s' % (task_id, url))
 
@@ -125,16 +127,21 @@ def task_complete(ret_val, task_id, url):
     try:
         acker.setValue(task_id, url)
     except Exception, e:
+        traceback.print_exc()
         logger.error(e)
         logger.error('encode error with task %s url %s' % (task_id, url))
         return
     if ret_val == settings.CELERY_WORKER_OK:
+        logger.debug('DELETE FROM DATABASE WHERE URL=%s' % (url))
         runningTask.objects.filter(task_id=task_id, page_url=url).delete()
+    else:
+        logger.error('RETURN VALUE EQUALS %d' % (ret_val))
 
     xorValue = 1
     try:
         xorValue = acker.getValue(task_id)
     except Exception, e:
+        traceback.print_exc()
         logger.error(e)
         logger.error('get xor value error with task %s'% (task_id))
         return
