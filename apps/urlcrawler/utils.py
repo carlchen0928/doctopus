@@ -107,7 +107,8 @@ class Fetch_and_parse_and_store(object):
 
         tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
             self.depth, self.now_depth + 1, self.allow_domains), \
-            link=tasks.task_complete.s(self.task_id, self.url))
+            link=tasks.task_complete.s(self.task_id, href))
+        self.logger.debug('DESPATCH A TASK URL=%s' % (href))
 
         if sleep_or_not == 1:
     		time.sleep(settings.DOWNLOAD_DELAY / 60)
