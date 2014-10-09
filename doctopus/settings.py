@@ -168,10 +168,10 @@ CELERY_ROUTES = {
         'queue': 'task_running',
     },
     'apps.urlcrawler.tasks.new_task': {
-        'queue': 'task_running',
+        'queue': 'new_task',
     },
     'apps.urlcrawler.tasks.task_complete': {
-        'queue': 'task_running',
+        'queue': 'task_complete',
     },
     'apps.urlcrawler.tasks.allTask_complete': {
         'queue': 'task_running',
