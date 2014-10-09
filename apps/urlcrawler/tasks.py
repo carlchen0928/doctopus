@@ -84,8 +84,6 @@ def task_running():
     except Exception, e:
         traceback.print_exc()
         logger.error('can not push task from queueing to running')
-    finally:
-        r.close()
 
 '''
 @app.task
@@ -167,5 +165,4 @@ def allTask_complete(task_id):
     r.hdel(settings.REDIS_RUNNING, hash(task_id))
     r.hdel('task_xor', task_id)
     urlTask.objects.filter(task_id=task_id).update(status='Completed')
-    r.close()
     print 'call allTask complete'
