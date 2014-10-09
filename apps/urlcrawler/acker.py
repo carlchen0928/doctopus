@@ -11,6 +11,7 @@ def setValue(task_id, url):
     r = redis.Redis(connection_pool=settings.REDIS_POOL)
     print r.hget('task_xor', task_id)
     r.hset('task_xor', task_id, int(r.hget('task_xor', task_id)) ^ acker)
+    r.close()
 
 def getValue(task_id):
     r = redis.Redis(connection_pool=settings.REDIS_POOL)
