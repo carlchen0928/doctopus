@@ -161,7 +161,8 @@ def allTask_complete(task_id):
     #remove redis task-url dict
     p = pyreBloom.pyreBloom('task%s' % (task_id), 100000, 0.01, host='172.21.1.155')
     p.delete()
-    #r = redis.Redis(connection_pool=settings.REDIS_POOL)
-    #r.hdel(settings.REDIS_RUNNING, hash(task_id))
+    r = redis.Redis(connection_pool=settings.REDIS_POOL)
+    r.hdel(settings.REDIS_RUNNING, hash(task_id))
+    r.hdel('task_xor', task_id)
     urlTask.objects.filter(task_id=task_id).update(status='Completed')
     print 'call allTask complete'
