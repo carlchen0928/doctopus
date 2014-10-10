@@ -74,8 +74,10 @@ def task_running():
                 task = r.rpop(settings.REDIS_QUEUEING)
                 task = pickle.loads(task)
 
-                r.hset(settings.REDIS_RUNNING, hash(task[0]), task)
-
+                r.hset(settings.REDIS_RUNNING, hash(task[0]),
+                        pickle.dumps(task))
+                urlTask.objects.filter(task_id=task[0]).update(status='Running')
+                
                 #split task into many urls and do work
                 dispatch_task(task, __name__, r)
                 logger.debug('task %s have been sent to running queue.' %
@@ -146,7 +148,7 @@ def task_complete(ret_val, task_id, url):
         logger.error('get xor value error with task %s'% (task_id))
         return
 
-    if xorValue == 0:
+    if int(xorValue) == 0:
         result = allTask_complete.delay(task_id)        
         result.get()
         logger.info('task %s have done!' % (task_id))
