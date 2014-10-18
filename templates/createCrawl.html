@@ -1,0 +1,89 @@
+<form class="load-contain" action="/urlcrawler/upload" method="post" enctype="multipart/form-data" accept-charset="utf-8">
+    {% csrf_token %}
+	<div class="title-font" class="row-tab">Create a Crawl </div>
+    
+    <label>Crawl Name</label>
+    <input type="text" class="row-tab" name="name">
+    
+    <label>Url File</label>
+    <div class="sel-mdl selctMdl">
+    	<ul>
+        	<!--<li class="active"><a href="#" id="existing">Existing URL List</a></li>-->
+            <li class="active"><a href="#" id="upload">Upload a URL List</a></li>
+            <li><a href="#" id="typein">Type in a URL List</a></li>
+        </ul>
+    </div>
+    <div class="item-mdl"  class="row-tab">
+        <div class="upload show">
+        	<div class="upload-info" id="dropbox">
+            	<h2>Select a File.</h2>
+                File must be in plain text format, max file size is 40MB.
+            </div>
+            <div class="fileUpload button small">
+                
+                <input type="text" name="upfile" id="upfile" class="row-tab" name="upfile_name">  
+                <input type="button" value="Choose a File" onclick="path.click()">  
+                <input type="file" id="path" style="display:none" onchange="upfile.value=this.value" name="urlfile">
+            </div>
+        </div>
+        <div class="typein">
+            	<label>Name Your List</label>
+                <input type="text" class="row-tab" name="txtname"/>
+                <label >Use line breaks to list separate URL's. (Max number of URL's is 50)</label>
+                <textarea class="row-tab" name="content"></textarea>
+                <input type="button" value="Save URL List"/>
+        </div>
+    </div>
+    
+    <label>Depth Level</label>
+    <input type="text"  class="row-tab" placeholder="Max depth you want to track the url, if you only want to crawl root url, fill in 0." name="deepth">
+
+    <label>Allow Domains</label>
+    <input type="text"  class="row-tab" placeholder="Allow domain list you want to track your url. Seperate by ','" name="filter">
+    
+    <label>Customize</label>
+	<div class="radio-groups row-tab">
+    	<input type="radio" value="day" name="custom"><span>every day</span>
+        <input type="radio" value="week" name="custom"><span>every week</span>
+        <input type="radio" value="month" name="custom"><span>every month</span>
+        <input type="radio" value="year" name="custom"><span>every year</span>
+    </div>
+    <div class="submit"><input type="submit" value="Create" ></div>
+</form>
+
+<script>
+	// document.addEventListener("dragenter", function(e){  
+	// 	dropbox.style.borderColor = 'gray';  
+	// }, false);  
+	// document.addEventListener("dragleave", function(e){  
+	// 	dropbox.style.borderColor = 'silver';  
+	// }, false);  
+	// dropbox.addEventListener("dragenter", function(e){  
+	// 	dropbox.style.borderColor = 'gray';  
+	// 	dropbox.style.backgroundColor = 'white';  
+	// }, false);  
+	// dropbox.addEventListener("dragleave", function(e){  
+	// 	dropbox.style.backgroundColor = 'transparent';  
+	// }, false);  
+	// dropbox.addEventListener("dragenter", function(e){  
+	// 	e.stopPropagation();  
+	// 	e.preventDefault();  
+	// }, false);  
+	// dropbox.addEventListener("dragover", function(e){  
+	// 	e.stopPropagation();  
+	// 	e.preventDefault();  
+	// }, false);  
+	// dropbox.addEventListener("drop", function(e){  
+	// 	e.stopPropagation();  
+	// 	e.preventDefault();  
+		  
+	// 	handleFiles(e.dataTransfer.files);  
+		  
+	// 	submit.disabled = false;  
+	// }, false); 
+	
+	// handleFiles = function(files) {  
+	// 	document.getElementById('upfile').value = files[0].name;
+	// } 
+	
+</script>

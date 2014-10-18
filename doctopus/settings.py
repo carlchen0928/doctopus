@@ -13,6 +13,10 @@ import os
 import redis
 from mongoengine import connect
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+TEMPLATE_DIRS = (
+    os.path.join(BASE_DIR, 'templates').replace('\\', '/'),
+)
+FILE_DIRS = os.path.join(BASE_DIR, 'urlfiles').replace('\\', '/')
 
 
 # Quick-start development settings - unsuitable for production
@@ -48,6 +52,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfResponseMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -89,6 +94,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static').replace('\\', '/'),
+)
 
 
 
@@ -123,7 +131,7 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 BROKER_URL = 'redis://172.21.1.155/9'
 CELERY_RESULT_BACKEND = 'redis://172.21.1.155/10'
 
-DOWNLOAD_DELAY = 10
+DOWNLOAD_DELAY = 300
 
 
 #====================

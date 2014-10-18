@@ -1,0 +1,51 @@
+<div class="load-contain">
+	<div class="title-font row-tab">myCrawls <a href="javascript:crateCrawl.click()">Create a Crawl</a></div>
+	<table cellpadding="0" cellspacing="0" class="crawlList">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Create Date</th>
+                <th>Status</th>
+                <th># of URLs Crawled</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in item_list %}
+            <tr>
+                <td>{{ item.task_id }}</td>
+                <td>{{ item.task_name }}</td>
+                <td>{{ item.create_date }}</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.number }}</td>
+                <td><a href="#">Cancel Crawl</a></td>
+            </tr>
+            {% endfor %}
+            <!-- <tr>
+            	<td><a href="#" class="crawId">c13234</a></td>
+                <td>sdfdsf</td>
+                <td>2014-09-17 10:11</td>
+                <td>Y</td>
+                <td>safs</td>
+                <td><a href="#">Cancel Crawl</a></td>
+            </tr>
+            <tr>
+            	<td><a href="#" class="crawId">c13234</a></td>
+                <td>sdfdsf</td>
+                <td>2014-09-17 10:11</td>
+                <td>Y</td>
+                <td>safs</td>
+                <td><a href="#">Cancel Crawl</a></td>
+            </tr>
+            <tr>
+            	<td><a href="#" class="crawId">c13234</a></td>
+                <td>sdfdsf</td>
+                <td>2014-09-17 10:11</td>
+                <td>Y</td>
+                <td>safs</td>
+                <td><a href="#">Cancel Crawl</a></td>
+            </tr> -->
+        </tbody>
+    </table>
+</div>
