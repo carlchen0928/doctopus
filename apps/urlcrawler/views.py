@@ -42,20 +42,22 @@ def upload(request):
 				request.POST['name'])
 		url_filter = request.POST['filter'] \
 			if request.POST.has_key('filter') else ''
+
 		ptask = urlTask(task_name=request.POST['name'], \
 			task_filepath=f, \
-			max_depth=request.POST['deepth'], \
+			max_depth=int(request.POST['deepth']), \
 			url_filter=url_filter, \
 			status="Pending", \
 			create_date=datetime.datetime.now())
 		ptask.save()
 		#push task into QUEUEING queue
 		r = redis.Redis(connection_pool=settings.REDIS_POOL)
+
 		allow_domains = url_filter.split(',')
-		r.lpush(settings.REDIS_QUEUEING, \
-			pickle.dumps(\
-				[ptask.task_id, ptask.task_filepath, \
-				ptask.max_depth, allow_domains]))
+        info = [ptask.task_id, ptask.task_filepath, ptask.max_depth, allow_domains]
+        print info
+        r.lpush(settings.REDIS_QUEUEING, \
+            pickle.dumps(info))
 	#return render_to_response('index.html')
 	return HttpResponseRedirect('/urlcrawler/index')
 
