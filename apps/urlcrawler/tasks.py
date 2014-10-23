@@ -146,7 +146,7 @@ def task_complete(ret_val, task_id, url):
         logger.error('get xor value error with task %s'% (task_id))
         return
 
-    if xorValue == 0:
+    if int(xorValue) == 0:
         result = allTask_complete.delay(task_id)        
         result.get()
         logger.info('task %s have done!' % (task_id))
