@@ -76,6 +76,8 @@ DATABASES = {
     }
 }
 
+COW_PROXY_HANDLER = 'http://10.214.129.221:7777'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
@@ -131,7 +133,7 @@ MONGODB = connect(MONGO_DB.pop('name'), **MONGO_DB)
 BROKER_URL = 'redis://172.21.1.155/9'
 CELERY_RESULT_BACKEND = 'redis://172.21.1.155/10'
 
-DOWNLOAD_DELAY = 300
+DOWNLOAD_DELAY = 100
 
 
 #====================

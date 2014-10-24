@@ -43,7 +43,7 @@ def dispatch_task(task, log_name, r):
         with open(url_path, 'r') as f:
             urls = f.readlines()
     except Exception, e:
-        logger.debug(e)
+        logger.error(e)
         return
     if urls == []:
         logger.error('url list is empty, can not continue')
@@ -85,22 +85,23 @@ class Fetch_and_parse_and_store(object):
 
     def fetch(self, retry=2, proxies=None):
 		
-		try:
-			response = requests.get(self.url, headers=self.headers,\
+        try:
+            response = requests.get(self.url, headers=self.headers,\
                     timeout=10, proxies=proxies)
-			if self.is_response_avaliable(response):
-				self.page_source = response.text
-				return True
-			else:
-				self.logger.warning('Page not avaliable. Status code: %d URL:%s\n' \
+            if self.is_response_avaliable(response):
+                self.page_source = response.text
+                return True
+            else:
+                self.logger.warning('Page not avaliable. Status code: %d URL:%s' \
                         % (response.status_code, self.url))
-				return False
-		except Exception, e:
-			if retry > 0:
-				return self.fetch(retry - 1)
-			else:
-				self.logger.debug(str(e) + ' URL: %s \n' % self.url)
-				return False
+                return False
+        except Exception, e:
+            if retry > 0:
+                return self.fetch(retry - 1, proxies=proxies)
+            else:
+                self.logger.error('FROM URL: %s' % (self.from_url))
+                self.logger.error(str(e) + ' URL: %s' % self.url)
+                return False
 
     def follow_links_delay(self, href, sleep_or_not):
         tasks.new_task.delay(self.task_id, href).get()
@@ -108,7 +109,7 @@ class Fetch_and_parse_and_store(object):
         tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
             self.depth, self.now_depth + 1, self.allow_domains), \
             link=tasks.task_complete.s(self.task_id, href))
-        self.logger.debug('DESPATCH A TASK URL=%s' % (href))
+        self.logger.info('DESPATCH A TASK URL=%s' % (href))
 
         if sleep_or_not == 1:
     		time.sleep(settings.DOWNLOAD_DELAY / 60)
