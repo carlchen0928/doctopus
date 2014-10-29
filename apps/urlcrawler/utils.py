@@ -86,8 +86,8 @@ class Fetch_and_parse_and_store(object):
     def fetch(self, retry=2, proxies=None):
 		
         try:
-            response = requests.get(self.url, headers=self.headers,\
-                    timeout=10, proxies=proxies)
+            response = requests.get(self.url, \
+                    headers=self.headers, proxies=proxies)
             if self.is_response_avaliable(response):
                 self.page_source = response.text
                 return True
@@ -96,12 +96,12 @@ class Fetch_and_parse_and_store(object):
                         % (response.status_code, self.url))
                 return False
         except Exception, e:
-            if retry > 0:
-                return self.fetch(retry - 1, proxies=proxies)
-            else:
-                self.logger.error('FROM URL: %s' % (self.from_url))
-                self.logger.error(str(e) + ' URL: %s' % self.url)
-                return False
+            #if retry > 0:
+                #return self.fetch(retry - 1, proxies=proxies)
+            #else:
+            self.logger.error('FROM URL: %s' % (self.from_url))
+            self.logger.error(str(e) + ' URL: %s' % self.url)
+            return False
 
     def follow_links_delay(self, href, sleep_or_not):
         tasks.new_task.delay(self.task_id, href).get()
