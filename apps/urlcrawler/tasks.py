@@ -40,6 +40,7 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     url = url.strip()
     p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.001, host='172.21.1.155')
     if p.contains(url):
+        logger.warning("%s have been seen." % (url))
         return settings.CELERY_WORKER_OK
 
     # start crawling...
@@ -53,7 +54,10 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     }
 
     if fps.fetch(proxies=proxies) == True:
+        logger.warning('Before fps.follow_links()')
         fps.follow_links()
+        logger.warning('After fps.follow_links()')
+        logger.warning('CALL STORE................')
         if fps.store() == True:
             logger.info('%s OK!' % (url))
             return settings.CELERY_WORKER_OK

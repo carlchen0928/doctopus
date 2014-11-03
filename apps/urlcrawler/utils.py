@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 import datetime
 import time
@@ -89,6 +89,7 @@ class Fetch_and_parse_and_store(object):
             response = requests.get(self.url, \
                     headers=self.headers, proxies=proxies)
             if self.is_response_avaliable(response):
+                self.logger.info(self.url)
                 self.page_source = response.text
                 return True
             else:
@@ -104,7 +105,9 @@ class Fetch_and_parse_and_store(object):
             return False
 
     def follow_links_delay(self, href, sleep_or_not):
+        self.logger.warning('Before delay get')
         tasks.new_task.delay(self.task_id, href).get()
+        self.logger.warning('After delay get')
 
         tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
             self.depth, self.now_depth + 1, self.allow_domains), \
@@ -144,6 +147,7 @@ class Fetch_and_parse_and_store(object):
             doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
                     page_level=self.now_depth, download_date=now)
             doc.save()
+            self.logger.info("save URL %s" % (self.url))
         except Exception, e:
             self.logger.error('STORE ERROR\n' + str(e) + ' URL: %s \n' % self.url)
             return False
