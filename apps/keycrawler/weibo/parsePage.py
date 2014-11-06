@@ -12,6 +12,7 @@ import sys
 import storeMysql
 import settings
 import downloadPicture
+import myLog
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -19,10 +20,11 @@ sys.setdefaultencoding('utf-8')
 
 class ParsePage:
 
-    def __init__(self, htmlDoc):
+    def __init__(self, keyword, htmlDoc):
         assert isinstance(htmlDoc, str), 'htmlDoc is not str'
+        self.keyword = keyword
         self.htmlDoc = htmlDoc
-        self.logger = logging.getLogger('root')
+        self.logger = logging.getLogger('my_weibo_crawler')
 
     def getContent(self):
         needLine = ''
@@ -58,7 +60,7 @@ class ParsePage:
             try:
                 content = contentTag.find('em', recursive=False).get_text()
             except Exception, e:
-                logger.error('parse content error' + str(e))
+                self.logger.error('parse content error' + str(e))
                 print str(e)
                 content = ''
             try:
@@ -66,16 +68,17 @@ class ParsePage:
                 date = person.find_all('a', attrs={'class': 'date'}) 
                 date = date[-1]['title']
             except Exception, e:
-                logger.error('parse date error' + str(e))
+                self.logger.error('parse date error' + str(e))
                 print str(e)
                 date = ''
             
             print userName
+            self.logger.info(userName)
 
             storePicturePath = settings.STORE_PICTURE_PATH
             picturesXML = downloadPicture.getUrlAndDownloadPicture(person,
-                    storePicturePath, weiboId, date)
-            storeMysql.store(url, weiboId, userName, userUrl, date, content, picturesXML)
+                                storePicturePath, weiboId, date)
+            storeMysql.store(url, self.keyword, weiboId, userName, userUrl, date, content, picturesXML)
             
         if self.htmlDoc.find(u'下一页') != -1:  return 1
         else: return 0

@@ -7,6 +7,7 @@ Created on 2014-10-22
 import urllib2 
 #import requests
 import time
+import datetime
 import sys
 import os
 import random
@@ -15,8 +16,7 @@ import traceback
 
 import parsePage
 import weiboLogin
-
-logging.basicConfig(filename='crawler.log', level=logging.DEBUG, filemode='w')
+import myLog
 
 class MainCrawler:
 
@@ -24,18 +24,31 @@ class MainCrawler:
         self.keyword = keyword
         self.start = start
         self.end = end
+        self.logger = logging.getLogger('my_weibo_crawler')
 
     def crawl(self):
 
-        username = '18767105515'
-        password = 'xxxxxxxxxxx'
+        username = r'echobfy@163.com'
+        password = r'udms1234'
         cookie_file = 'weibo_login_cookies.dat'
+        
+        #如果cookie文件创建时间和当前时间相差超过一个小时，则重新登陆记录cookie
+#        if os.path.exists('weibo_login_cookies.dat') == 1:
+#            fileStatInfo = os.stat(r'weibo_login_cookies.dat')
+#            fileCreatedTime = datetime.datetime.fromtimestamp(fileStatInfo.st_ctime)
+#            now = datetime.datetime.now()
+#            print now
+#            print fileCreatedTime
+#            if now - fileCreatedTime > datetime.timedelta(hours=1):
+#                print 'remove weibo_login_cookies.dat succeed!'
+#                os.remove(r'weibo_login_cookies.dat')
+
         if weiboLogin.login(username, password, cookie_file):
             print 'Login Weibo succeed!'
-            logging.info('Login Weibo succeed!')
+            self.logger.info('Login Weibo succeed!')
         else:
             print 'Login Weibo failed!'; 
-            logging.error('Login Weibo failed!')
+            self.logger.error('Login Weibo failed!')
             return 0
 
         page = 1
@@ -44,15 +57,15 @@ class MainCrawler:
             url += '&timescope=custom:' + self.start + '-0:' + self.end + '-23' + '&page=' + str(page)
             print 'go to download url: ' + url
 
-            logging.info('go to download url:' + url)
+            self.logger.info('go to download url:' + url)
             try:
                 htmlDoc = urllib2.urlopen(url).read()
-                ppp = parsePage.ParsePage(htmlDoc)
+                ppp = parsePage.ParsePage(self.keyword, htmlDoc)
                 hasNextPage = ppp.parse(page, url)
             except Exception, e:
                 exc = str(traceback.print_exc())
-                logging.error(exc)
-                logging.error(e)
+                self.logger.error(exc)
+                self.logger.error(e)
                 print exc
                 
             if hasNextPage == 0:

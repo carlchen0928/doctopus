@@ -5,12 +5,13 @@ from bson import ObjectId
 
 
 class urlTask(models.Model):
-    task_id = models.IntegerField(primary_key=True)
+    task_id = models.AutoField(primary_key=True)
     task_name = models.CharField(max_length=100)
     task_filepath = models.CharField(max_length=100)
     max_depth = models.IntegerField()
     url_filter = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=100)
+    create_date = models.DateTimeField()
     class Meta:
         db_table = 'taskinfo'
 

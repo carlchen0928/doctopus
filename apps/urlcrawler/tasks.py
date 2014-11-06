@@ -36,22 +36,22 @@ logger = get_task_logger(__name__)
 def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domains=None):
 
     # Filter the url that has been crawled
-    p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.01, host='172.21.1.155')
-#if p.contains(url):
-#       return
-
+    logger.error('-------------------' + str(depth))
+    url = url.strip()
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 
             now_depth, allow_domains, __name__)
-    p.extend(url)
 
     if fps.fetch() == True:
         fps.follow_links()
         if fps.store() == True:
+            logger.debug('OK!')
             return settings.CELERY_WORKER_OK
         else:
+            logger.debug('STORE ERROR!')
             return settings.CELERY_WORKER_STOREE
     else:
+        logger.debug('FETCH ERROR!')
         return settings.CELERY_WORKER_FETCHE
 
 
@@ -74,8 +74,10 @@ def task_running():
                 task = r.rpop(settings.REDIS_QUEUEING)
                 task = pickle.loads(task)
 
-                r.hset(settings.REDIS_RUNNING, hash(task[0]), task)
-
+                r.hset(settings.REDIS_RUNNING, hash(task[0]),
+                        pickle.dumps(task))
+                urlTask.objects.filter(task_id=task[0]).update(status='Running')
+                
                 #split task into many urls and do work
                 dispatch_task(task, __name__, r)
                 logger.debug('task %s have been sent to running queue.' %
@@ -132,7 +134,7 @@ def task_complete(ret_val, task_id, url):
         logger.error('encode error with task %s url %s' % (task_id, url))
         return
     if ret_val == settings.CELERY_WORKER_OK:
-        logger.debug('DELETE FROM DATABASE WHERE URL=%s' % (url))
+        logger.error('DELETE FROM DATABASE WHERE URL=%s' % (url))
         runningTask.objects.filter(task_id=task_id, page_url=url).delete()
     else:
         logger.error('RETURN VALUE EQUALS %d' % (ret_val))

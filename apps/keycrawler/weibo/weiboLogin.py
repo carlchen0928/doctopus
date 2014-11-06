@@ -13,6 +13,8 @@ Updated on APril 16, 2014
 @author: wanghaisheng
 '''
 
+
+
 try:
     import os
     import sys
@@ -222,8 +224,8 @@ def get_user(username):
 if __name__ == '__main__':
     
     
-    username = '18767105515'
-    pwd = '13congsuan14'
+    username = 'echobfy@163.com'
+    pwd = 'xxxxxxxxxxxx'
     cookie_file = 'weibo_login_cookies.dat'
     if login(username, pwd, cookie_file):
         print 'Login WEIBO succeeded'

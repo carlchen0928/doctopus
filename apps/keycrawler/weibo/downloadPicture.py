@@ -11,7 +11,7 @@ import logging
 from bs4 import BeautifulSoup
 import xml.dom.minidom as Dom
 
-logger = logging.getLogger('root')
+logger = logging.getLogger('my_weibo_crawler')
 
 def filter_some(tag):
     return tag.name == 'img' and tag.has_attr('action-data') and tag.has_attr('action-type')
@@ -43,6 +43,7 @@ def getUrlAndDownloadPicture(personTag, storePicturePath, weiboId, date):
         index = 1
         for pt in picturesTag:
             smallP = pt.get('src')
+            logger.info(smallP)
             print smallP
     
             #largeP = string.replace(smallP, "thumbnail", "large")
@@ -54,6 +55,7 @@ def getUrlAndDownloadPicture(personTag, storePicturePath, weiboId, date):
             pNode.setAttribute('storePath', storePicturePath + '/%d.jpg' % index)
             rootNode.appendChild(pNode)
             if downloadPicture(middleP, storePicturePath, index):
+                logger.info('download Picture succeed...')
                 print 'download Picture succeed...'
             index += 1
             time.sleep(1)

@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>无标题文档</title>
+        {% load staticfiles %}
+        <link rel="stylesheet" href="{% static 'css/index.css'%}">
+        <script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+        <script src="{% static 'js/index.js' %}"></script>
+        
+    </head>
+
+    <body>
+    <!--top begin-->
+    	<div id="head">
+        	<img src="{% static 'images/spider.png' %}"/>
+            <ul>
+            	<li><a href="#">D-Octopus</a></li>
+            	<li class="active"><a href="#">Crawl</a></li>
+                <li><a href="#">Keywords</a></li>
+                <li><a href="#">Rss</a></li>
+            </ul>
+            <div class="pull-right"><a href="#">xxx</a><a href="#">xxx</a></div>
+        </div>
+    <!--top end-->
+    	
+        <div class="row subnav sel-mdl">
+        	<ul>
+            	<li class="active"><a href="#" id="myCrawls">My Crawls</a></li>
+                <li><a href="#" id="createCrawl">Create a Crawl</a></li>
+            </ul>
+        </div>
+        <div class="row" id="load-html">
+        </div>
+        <!--<div class="row gry2gryShadow"></div>-->
+
+    <!--foot begin-->
+    	<div id="foot">
+        	<div class="hr"></div>
+            <div class="foot-cotain">
+            	
+
+    	Copyright ? 2014 Digital media Computing & Design Lab, Zju.
+
+            </div>
+        </div>
+    <!--foot end-->
+
+    <!--加载js -->
+    <!-- <script src="../js/jquery-1.11.1.min.js"></script>
+    <script src="../js/index.js"></script> -->
+    </body>
+</html>
