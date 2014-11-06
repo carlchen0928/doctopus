@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 import datetime
 import time
@@ -44,7 +44,7 @@ def dispatch_task(task, log_name, r):
         with open(url_path, 'r') as f:
             urls = f.readlines()
     except Exception, e:
-        logger.debug(e)
+        logger.error(e)
         return
     if urls == []:
         logger.error('url list is empty, can not continue')
@@ -86,30 +86,34 @@ class Fetch_and_parse_and_store(object):
 
     def fetch(self, retry=2, proxies=None):
 		
-		try:
-			response = requests.get(self.url, headers=self.headers,\
-                    timeout=10, proxies=proxies)
-			if self.is_response_avaliable(response):
-				self.page_source = response.text
-				return True
-			else:
-				self.logger.warning('Page not avaliable. Status code: %d URL:%s\n' \
+        try:
+            response = requests.get(self.url, \
+                    headers=self.headers, proxies=proxies)
+            if self.is_response_avaliable(response):
+                self.logger.info(self.url)
+                self.page_source = response.text
+                return True
+            else:
+                self.logger.warning('Page not avaliable. Status code: %d URL:%s' \
                         % (response.status_code, self.url))
-				return False
-		except Exception, e:
-			if retry > 0:
-				return self.fetch(retry - 1)
-			else:
-				self.logger.debug(str(e) + ' URL: %s \n' % self.url)
-				return False
+                return False
+        except Exception, e:
+            #if retry > 0:
+                #return self.fetch(retry - 1, proxies=proxies)
+            #else:
+            self.logger.error('FROM URL: %s' % (self.from_url))
+            self.logger.error(str(e) + ' URL: %s' % self.url)
+            return False
 
     def follow_links_delay(self, href, sleep_or_not):
+        self.logger.warning('Before delay get')
         tasks.new_task.delay(self.task_id, href).get()
+        self.logger.warning('After delay get')
 
         tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
             self.depth, self.now_depth + 1, self.allow_domains), \
             link=tasks.task_complete.s(self.task_id, href))
-        self.logger.debug('DESPATCH A TASK URL=%s' % (href))
+        self.logger.info('DESPATCH A TASK URL=%s' % (href))
 
         if sleep_or_not == 1:
     		time.sleep(settings.DOWNLOAD_DELAY / 60)
@@ -153,6 +157,7 @@ class Fetch_and_parse_and_store(object):
             doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
                     page_level=self.now_depth, download_date=now)
             doc.save()
+            self.logger.info("save URL %s" % (self.url))
         except Exception, e:
             self.logger.error('STORE ERROR\n' + str(e) + ' URL: %s \n' % self.url)
             return False

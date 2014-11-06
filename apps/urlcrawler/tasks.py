@@ -38,20 +38,29 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     # Filter the url that has been crawled
     logger.error('-------------------' + str(depth))
     url = url.strip()
+
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 
             now_depth, allow_domains, __name__)
 
-    if fps.fetch() == True:
+    proxies = {
+        'http': settings.COW_PROXY_HANDLER, 
+        'https': settings.COW_PROXY_HANDLER,
+    }
+
+    if fps.fetch(proxies=proxies) == True:
+        logger.warning('Before fps.follow_links()')
         fps.follow_links()
+        logger.warning('After fps.follow_links()')
+        logger.warning('CALL STORE................')
         if fps.store() == True:
-            logger.debug('OK!')
+            logger.info('%s OK!' % (url))
             return settings.CELERY_WORKER_OK
         else:
-            logger.debug('STORE ERROR!')
+            logger.error('%s STORE ERROR!' % (url))
             return settings.CELERY_WORKER_STOREE
     else:
-        logger.debug('FETCH ERROR!')
+        logger.error('%s FETCH ERROR!' % (url))
         return settings.CELERY_WORKER_FETCHE
 
 
@@ -67,7 +76,7 @@ def task_running():
         if running < settings.REDIS_RUNNING_MAX:
             length = r.llen(settings.REDIS_QUEUEING)
             if length == 0:
-                logger.debug('there is no queueing task!')
+                logger.info('there is no queueing task!')
                 return
             smaller = min(length, settings.REDIS_RUNNING_MAX - running) 
             for i in range(smaller):
@@ -80,7 +89,7 @@ def task_running():
                 
                 #split task into many urls and do work
                 dispatch_task(task, __name__, r)
-                logger.debug('task %s have been sent to running queue.' %
+                logger.info('task %s have been sent to running queue.' %
                         (task[0]))
 
     except Exception, e:
@@ -109,6 +118,7 @@ def task_error(uuid, task_id, url):
 def new_task(task_id, url):
     #write task_id, url to mysql
     #xor with url
+    logger.warning('new task started. URL: %s' % (url))
     taskr = runningTask(task_id=task_id, page_url=url)
     taskr.save()
     try:
@@ -134,7 +144,7 @@ def task_complete(ret_val, task_id, url):
         logger.error('encode error with task %s url %s' % (task_id, url))
         return
     if ret_val == settings.CELERY_WORKER_OK:
-        logger.error('DELETE FROM DATABASE WHERE URL=%s' % (url))
+        logger.info('DELETE FROM DATABASE WHERE URL=%s' % (url))
         runningTask.objects.filter(task_id=task_id, page_url=url).delete()
     else:
         logger.error('RETURN VALUE EQUALS %d' % (ret_val))
@@ -161,10 +171,10 @@ def allTask_complete(task_id):
     #remove task from redis running
     #change mysql status
     #remove redis task-url dict
+    print 'call allTask complete'
     p = pyreBloom.pyreBloom('task%s' % (task_id), 100000, 0.01, host='172.21.1.155')
     p.delete()
     r = redis.Redis(connection_pool=settings.REDIS_POOL)
     r.hdel(settings.REDIS_RUNNING, hash(task_id))
     r.hdel('task_xor', task_id)
     urlTask.objects.filter(task_id=task_id).update(status='Completed')
-    print 'call allTask complete'
