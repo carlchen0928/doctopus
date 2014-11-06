@@ -2,6 +2,7 @@
 
 import datetime
 import time
+import pyreBloom
 import requests
 import urlparse
 import tasks
@@ -123,19 +124,28 @@ class Fetch_and_parse_and_store(object):
         if self.now_depth >= self.depth:
             return
 
+        p = pyreBloom.pyreBloom('task%d' % self.task_id, 100000, 0.001,
+                host='172.21.1.155')
+
         soup = BeautifulSoup(self.page_source)
         for link in soup.find_all('a', href=True):
             href = link.get('href').encode('utf8')
             if not href.startswith('http'):
                 href = urlparse.urljoin(self.url, href)
-                self.follow_links_delay(href, 1)
+                if not p.contains(href):
+                    p.extend(href)
+                    self.follow_links_delay(href, 1)
             elif href.find(self.netloc) != -1:
-                self.follow_links_delay(href, 1)
+                if not p.contains(href):
+                    p.extend(href)
+                    self.follow_links_delay(href, 1)
             else:
                 for domain in self.allow_domains:
                     if href.find(domain) != -1:
-                        self.follow_links_delay(href, 0)
-                        break
+                        if not p.contains(href):
+                            p.extend(href)
+                            self.follow_links_delay(href, 0)
+                            break
 
     def store(self):
         #self.page_source, self.url

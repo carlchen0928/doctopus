@@ -38,15 +38,10 @@ def retrieve_page(task_id, url, from_url=None, depth=0, now_depth=0, allow_domai
     # Filter the url that has been crawled
     logger.error('-------------------' + str(depth))
     url = url.strip()
-    p = pyreBloom.pyreBloom('task%d' % task_id, 100000, 0.001, host='172.21.1.155')
-    if p.contains(url):
-        logger.warning("%s have been seen." % (url))
-        return settings.CELERY_WORKER_OK
 
     # start crawling...
     fps = Fetch_and_parse_and_store(task_id, url, from_url, depth, 
             now_depth, allow_domains, __name__)
-    p.extend(url)
 
     proxies = {
         'http': settings.COW_PROXY_HANDLER, 
