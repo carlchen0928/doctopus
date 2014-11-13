@@ -53,7 +53,10 @@ def upload(request):
 		#push task into QUEUEING queue
 		r = redis.Redis(connection_pool=settings.REDIS_POOL)
 
-		allow_domains = url_filter.split(',')
+        if url_filter == '':
+            allow_domains = []
+        else:
+            allow_domains = url_filter.split(',')
         info = [ptask.task_id, ptask.task_filepath, ptask.max_depth, allow_domains]
         print info
         r.lpush(settings.REDIS_QUEUEING, \

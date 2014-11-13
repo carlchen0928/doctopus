@@ -9,6 +9,8 @@ import tasks
 import redis
 import pickle
 import acker
+import traceback
+from readability import Readability
 from bs4 import BeautifulSoup
 from celery.utils.log import get_task_logger
 from apps.urlcrawler.models import DDoc
@@ -88,7 +90,8 @@ class Fetch_and_parse_and_store(object):
 		
         try:
             response = requests.get(self.url, \
-                    headers=self.headers, proxies=proxies)
+                    headers=self.headers, proxies=proxies,
+                    timeout=settings.TIMEOUT)
             if self.is_response_avaliable(response):
                 self.logger.info(self.url)
                 self.page_source = response.text
@@ -108,12 +111,11 @@ class Fetch_and_parse_and_store(object):
     def follow_links_delay(self, href, sleep_or_not):
         self.logger.warning('Before delay get')
         tasks.new_task.delay(self.task_id, href).get()
-        self.logger.warning('After delay get')
 
         tasks.retrieve_page.apply_async((self.task_id, href, self.url, \
             self.depth, self.now_depth + 1, self.allow_domains), \
             link=tasks.task_complete.s(self.task_id, href))
-        self.logger.info('DESPATCH A TASK URL=%s' % (href))
+        self.logger.info('DISPATCH A TASK URL=%s' % (href))
 
         if sleep_or_not == 1:
     		time.sleep(settings.DOWNLOAD_DELAY / 60)
@@ -154,8 +156,27 @@ class Fetch_and_parse_and_store(object):
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
         now = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
-            doc = DDoc(task_id=self.task_id, from_url=self.from_url, page_url=self.url, page_content=self.page_source,
-                    page_level=self.now_depth, download_date=now)
+            ra = Readability(self.page_source, self.url)
+        except UnicodeDecodeError:
+            self.logger.error('encode error when grab article %s' % (self.url))    
+            ra = None
+        except Exception:
+            traceback.print_exc()
+            self.logger.error('error %s' % (self.url))
+            ra = None
+
+        title = ''
+        article = ''
+        if ra:
+            title = ra.title
+            article = ra.content
+            
+
+        try:
+            doc = DDoc(task_id=self.task_id, from_url=self.from_url,\
+                    page_url=self.url, page_content=self.page_source, \
+                    page_level=self.now_depth, download_date=now, \
+                    title=title, article=article)
             doc.save()
             self.logger.info("save URL %s" % (self.url))
         except Exception, e:

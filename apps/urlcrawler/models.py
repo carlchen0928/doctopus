@@ -23,6 +23,8 @@ class DDoc(mongo.Document):
     page_content = mongo.StringField()
     page_level = mongo.IntField()
     download_date = mongo.DateTimeField()
+    title = mongo.StringField()
+    article = mongo.StringField()
 
     meta = {
         'collection': 'doctopus', 
